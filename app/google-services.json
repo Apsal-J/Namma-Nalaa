@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "554997139294",
+    "project_id": "nammanala-613e6",
+    "storage_bucket": "nammanala-613e6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:554997139294:android:6877618de58bcf5df931cf",
+        "android_client_info": {
+          "package_name": "com.example.nammanalaa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7LNSDNAdkPbAXjear38MX9tpGiD_1V_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
