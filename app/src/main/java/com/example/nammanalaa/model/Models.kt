@@ -10,61 +10,83 @@ data class User(
     @get:FirestoreName("phone number") @set:FirestoreName("phone number")
     @get:DatabaseName("phone number") @set:DatabaseName("phone number")
     var phno: Long = 0,
-    var gender: String = "",
-    var age: Long = 0,
     var city: String = "",
     var address: String = "",
     var role: String = "Farmer", // "Farmer" or "Officer"
-    var designation: String = "" // For Officers
+    var designation: String = ""
+)
+
+data class WaterUpdate(
+    val id: String = "",
+    val villageName: String = "",
+    val message: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val postedBy: String = ""
+)
+
+data class FeedItem(
+    val id: String = "",
+    val villageName: String = "",
+    val updateMessage: String = "",
+    val time: String = "",
+    val postedBy: String = "",
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class MaintenanceSection(
+    val id: String = "",
+    val sectionName: String = "",
+    val status: String = "Pending", // Pending, In Progress, Completed
+    val lastUpdated: Long = System.currentTimeMillis(),
+    val history: List<MaintenanceHistoryRecord> = emptyList()
+)
+
+data class MaintenanceHistoryRecord(
+    val id: String = "",
+    val date: String = "",
+    val description: String = "",
+    val status: String = ""
+)
+
+data class SiltAlert(
+    val id: String = "",
+    val area: String = "",
+    val description: String = "",
+    val severity: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val postedBy: String = ""
+)
+
+data class OfficerContact(
+    val name: String = "",
+    val designation: String = "",
+    val phone: String = "",
+    val division: String = ""
+)
+
+data class Issue(
+    val id: String = "",
+    val reporter: String = "",
+    val area: String = "",
+    val type: String = "",
+    val description: String = "",
+    val priority: String = "",
+    val status: String = "",
+    val date: String = ""
 )
 
 data class Report(
     val id: String = "",
-    val farmerName: String = "",
-    val email: String = "",
-    val phno: String = "",
-    val address: String = "",
     val issueType: String = "",
-    val area: String = "",
-    val photoUrl: String = "", // Cloudinary URL
     val status: String = "Pending",
+    val area: String = "",
+    val address: String = "",
     val timestamp: Long = System.currentTimeMillis()
 )
 
-data class OfficerContact(
-    val name: String,
-    val role: String,
-    val phno: String,
-    val division: String
-)
-
-data class Issue(
-    val id: String,
-    val farmerName: String,
-    val area: String,
-    val type: String,
-    val description: String,
-    val priority: String,
-    val status: String,
-    val date: String
-)
-
 data class Notification(
-    val id: Int,
-    val title: String,
-    val message: String,
-    val time: String
-)
-
-data class FeedItem(
-    val id: Int,
-    val area: String,
-    val message: String,
-    val time: String,
-    val postedBy: String
-)
-
-data class ChatMessage(
-    val text: String,
-    val isUser: Boolean
+    val id: Int = 0,
+    val title: String = "",
+    val message: String = "",
+    val time: String = ""
 )

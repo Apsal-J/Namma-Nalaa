@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nammanalaa.model.*
-import com.example.nammanalaa.service.CloudinaryService
 import com.example.nammanalaa.service.FirebaseService
 import kotlinx.coroutines.launch
 
@@ -13,9 +12,12 @@ class MainViewModel(private val firebaseService: FirebaseService) : ViewModel() 
     val user = mutableStateOf<User?>(null)
     val isLoading = mutableStateOf(false)
     val error = mutableStateOf<String?>(null)
-    
-    val officers = mutableStateOf<List<User>>(emptyList())
+
+    val waterFeed = mutableStateOf<List<FeedItem>>(emptyList())
+    val maintenanceSections = mutableStateOf<List<MaintenanceSection>>(emptyList())
+    val siltAlerts = mutableStateOf<List<SiltAlert>>(emptyList())
     val recentReports = mutableStateOf<List<Report>>(emptyList())
+    val officers = mutableStateOf<List<User>>(emptyList())
 
     fun login(email: String, password: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
@@ -23,7 +25,7 @@ class MainViewModel(private val firebaseService: FirebaseService) : ViewModel() 
             val result = firebaseService.login(email, password)
             if (result.isSuccess) {
                 user.value = result.getOrNull()
-                fetchFarmerHomeData()
+                fetchAppData()
                 onSuccess()
             } else {
                 error.value = result.exceptionOrNull()?.message
@@ -38,7 +40,7 @@ class MainViewModel(private val firebaseService: FirebaseService) : ViewModel() 
             val result = firebaseService.registerUser(userData, password)
             if (result.isSuccess) {
                 user.value = userData
-                fetchFarmerHomeData()
+                fetchAppData()
                 onSuccess()
             } else {
                 error.value = result.exceptionOrNull()?.message
@@ -47,63 +49,66 @@ class MainViewModel(private val firebaseService: FirebaseService) : ViewModel() 
         }
     }
 
+    fun fetchAppData() {
+        viewModelScope.launch {
+            waterFeed.value = firebaseService.getWaterFeed()
+            maintenanceSections.value = firebaseService.getMaintenanceSections()
+            siltAlerts.value = firebaseService.getSiltAlerts()
+        }
+    }
+
     fun fetchFarmerHomeData() {
         val currentUser = user.value ?: return
-        if (currentUser.role == "Farmer") {
-            viewModelScope.launch {
-                officers.value = firebaseService.getOfficers()
-                recentReports.value = firebaseService.getReportsForUser(currentUser.email)
-            }
+        viewModelScope.launch {
+            recentReports.value = firebaseService.getReports(currentUser.uid)
+            officers.value = firebaseService.getOfficers()
+        }
+    }
+
+    fun postWaterUpdate(village: String, message: String) {
+        val currentUser = user.value ?: return
+        viewModelScope.launch {
+            val item = FeedItem(
+                villageName = village,
+                updateMessage = message,
+                postedBy = currentUser.name
+            )
+            firebaseService.postFeedUpdate(item)
+            fetchAppData()
+        }
+    }
+
+    fun postSiltAlert(area: String, description: String, severity: String) {
+        val currentUser = user.value ?: return
+        viewModelScope.launch {
+            val alert = SiltAlert(
+                area = area,
+                description = description,
+                severity = severity,
+                postedBy = currentUser.name
+            )
+            firebaseService.postSiltAlert(alert)
+            fetchAppData()
         }
     }
 }
 
-class ReportViewModel(
-    private val firebaseService: FirebaseService,
-    private val cloudinaryService: CloudinaryService
-) : ViewModel() {
+class ReportViewModel(private val firebaseService: FirebaseService) : ViewModel() {
     val isSubmitting = mutableStateOf(false)
     val submissionSuccess = mutableStateOf(false)
-    val error = mutableStateOf<String?>(null)
 
-    fun submitReport(
-        user: User,
-        issueType: String,
-        area: String,
-        address: String,
-        imageUri: Uri?
-    ) {
+    fun submitReport(user: User, type: String, area: String, address: String, imageUri: Uri?) {
         viewModelScope.launch {
             isSubmitting.value = true
-            try {
-                var photoUrl = ""
-                if (imageUri != null) {
-                    // Upload to Cloudinary
-                    photoUrl = cloudinaryService.uploadImage(imageUri) ?: throw Exception("Image upload failed")
-                }
-
-                val report = Report(
-                    farmerName = user.name,
-                    email = user.email,
-                    phno = user.phno.toString(),
-                    address = address,
-                    issueType = issueType,
-                    area = area,
-                    photoUrl = photoUrl, // Cloudinary link stored here
-                    timestamp = System.currentTimeMillis(),
-                    status = "Pending"
-                )
-
-                // Save report with Cloudinary link to Firebase RTDB
-                val result = firebaseService.submitReport(report)
-                if (result.isSuccess) {
-                    submissionSuccess.value = true
-                } else {
-                    error.value = result.exceptionOrNull()?.message
-                }
-            } catch (e: Exception) {
-                error.value = e.message
-            }
+            val report = Report(
+                issueType = type,
+                area = area,
+                address = address,
+                timestamp = System.currentTimeMillis(),
+                status = "Pending"
+            )
+            val result = firebaseService.submitReport(user.uid, report)
+            submissionSuccess.value = result.isSuccess
             isSubmitting.value = false
         }
     }

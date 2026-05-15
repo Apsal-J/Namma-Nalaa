@@ -1,7 +1,6 @@
 package com.example.nammanalaa.service
 
-import com.example.nammanalaa.model.Report
-import com.example.nammanalaa.model.User
+import com.example.nammanalaa.model.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
@@ -68,6 +67,83 @@ class FirebaseService {
         return null
     }
 
+    // --- Water Status Feed ---
+    suspend fun getWaterFeed(): List<FeedItem> {
+        return try {
+            val snapshot = db.child("water_feed").get().await()
+            snapshot.children.mapNotNull { it.getValue(FeedItem::class.java) }
+                .sortedByDescending { it.timestamp }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun postFeedUpdate(feedItem: FeedItem): Result<Unit> {
+        return try {
+            val ref = db.child("water_feed").push()
+            val itemWithId = feedItem.copy(id = ref.key ?: "")
+            ref.setValue(itemWithId).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // --- Maintenance Tracker ---
+    suspend fun getMaintenanceSections(): List<MaintenanceSection> {
+        return try {
+            val snapshot = db.child("maintenance").get().await()
+            snapshot.children.mapNotNull { it.getValue(MaintenanceSection::class.java) }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    // --- Silt Alert System ---
+    suspend fun getSiltAlerts(): List<SiltAlert> {
+        return try {
+            val snapshot = db.child("silt_alerts").get().await()
+            snapshot.children.mapNotNull { it.getValue(SiltAlert::class.java) }
+                .sortedByDescending { it.timestamp }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun postSiltAlert(alert: SiltAlert): Result<Unit> {
+        return try {
+            val ref = db.child("silt_alerts").push()
+            val alertWithId = alert.copy(id = ref.key ?: "")
+            ref.setValue(alertWithId).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // --- Reports ---
+    suspend fun getReports(uid: String): List<Report> {
+        return try {
+            val snapshot = db.child("reports").child(uid).get().await()
+            snapshot.children.mapNotNull { it.getValue(Report::class.java) }
+                .sortedByDescending { it.timestamp }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun submitReport(uid: String, report: Report): Result<Unit> {
+        return try {
+            val ref = db.child("reports").child(uid).push()
+            val reportWithId = report.copy(id = ref.key ?: "")
+            ref.setValue(reportWithId).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // --- Officers ---
     suspend fun getOfficers(): List<User> {
         return try {
             val snapshot = db.child("officers").get().await()
@@ -76,28 +152,4 @@ class FirebaseService {
             emptyList()
         }
     }
-
-    suspend fun getReportsForUser(email: String): List<Report> {
-        return try {
-            val snapshot = db.child("reports").get().await()
-            snapshot.children.mapNotNull { it.getValue(Report::class.java) }
-                .filter { it.email == email }
-                .sortedByDescending { it.timestamp }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    suspend fun submitReport(report: Report): Result<Unit> {
-        return try {
-            val reportRef = db.child("reports").push()
-            val finalReport = report.copy(id = reportRef.key ?: "")
-            reportRef.setValue(finalReport).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    fun getReportsRef() = db.child("reports")
 }

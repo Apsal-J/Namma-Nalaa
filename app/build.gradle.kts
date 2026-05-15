@@ -58,7 +58,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
-    implementation("com.google.firebase:firebase-database") // Added for Realtime Database
+    implementation("com.google.firebase:firebase-database")
     implementation(libs.kotlinx.coroutines.play.services)
 
 

@@ -198,6 +198,15 @@ fun DashboardScreen(navController: NavHostController, mainViewModel: MainViewMod
                     }
                 }
 
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    FeatureCard("Water Feed", Icons.Default.Water, Color(0xFF2196F3), Modifier.weight(1f)) { navController.navigate(Screen.WaterFeed.route) }
+                    FeatureCard("Maintenance", Icons.Default.Engineering, Color(0xFFFF9800), Modifier.weight(1f)) { navController.navigate(Screen.Maintenance.route) }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                FeatureCard("Silt Alerts", Icons.Default.Warning, Color(0xFFF44336), Modifier.fillMaxWidth()) { navController.navigate(Screen.SiltAlert.route) }
+
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Recent Reports
@@ -228,6 +237,17 @@ fun DashboardScreen(navController: NavHostController, mainViewModel: MainViewMod
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun FeatureCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Card(onClick = onClick, modifier = modifier.height(100.dp), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)), border = BorderStroke(1.dp, color.copy(alpha = 0.2f))) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(32.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(title, fontWeight = FontWeight.Bold, color = color, fontSize = 14.sp)
         }
     }
 }
@@ -277,6 +297,99 @@ fun OfficerContactCard(officer: User) {
                 Icon(Icons.Default.Business, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Division: ${officer.city}", style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
+            }
+        }
+    }
+}
+
+// --- Water Feed Screen ---
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WaterFeedScreen(navController: NavHostController, mainViewModel: MainViewModel) {
+    LaunchedEffect(Unit) { mainViewModel.fetchAppData() }
+    
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Water Supply Feed") }, navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }) }
+    ) { padding ->
+        LazyColumn(modifier = Modifier.padding(padding).fillMaxSize().background(BackgroundGray).padding(16.dp)) {
+            items(mainViewModel.waterFeed.value) { item ->
+                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Water, null, tint = Color(0xFF2196F3), modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(item.villageName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(item.updateMessage, style = MaterialTheme.typography.bodyLarge)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("By: ${item.postedBy}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                            Text(SimpleDateFormat("HH:mm, dd MMM", Locale.getDefault()).format(Date(item.timestamp)), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// --- Maintenance Tracker Screen ---
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MaintenanceTrackerScreen(navController: NavHostController, mainViewModel: MainViewModel) {
+    LaunchedEffect(Unit) { mainViewModel.fetchAppData() }
+    
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Maintenance Tracker") }, navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }) }
+    ) { padding ->
+        LazyColumn(modifier = Modifier.padding(padding).fillMaxSize().background(BackgroundGray).padding(16.dp)) {
+            items(mainViewModel.maintenanceSections.value) { section ->
+                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text(section.sectionName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Surface(color = when(section.status) { "Completed" -> PrimaryGreen.copy(0.1f) "In Progress" -> Color.Blue.copy(0.1f) else -> Orange.copy(0.1f) }, shape = RoundedCornerShape(8.dp)) {
+                                Text(section.status, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = when(section.status) { "Completed" -> PrimaryGreen "In Progress" -> Color.Blue else -> Orange }, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Last Updated: ${SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(section.lastUpdated))}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// --- Silt Alert Screen ---
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SiltAlertScreen(navController: NavHostController, mainViewModel: MainViewModel) {
+    LaunchedEffect(Unit) { mainViewModel.fetchAppData() }
+    
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Siltation Alerts") }, navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }) }
+    ) { padding ->
+        LazyColumn(modifier = Modifier.padding(padding).fillMaxSize().background(BackgroundGray).padding(16.dp)) {
+            items(mainViewModel.siltAlerts.value) { alert ->
+                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, if(alert.severity == "High") Color.Red.copy(0.5f) else Color.Transparent)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Warning, null, tint = if(alert.severity == "High") Color.Red else Orange, modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(alert.area, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Surface(color = if(alert.severity == "High") Color.Red.copy(0.1f) else Orange.copy(0.1f), shape = RoundedCornerShape(8.dp)) {
+                                Text(alert.severity, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = if(alert.severity == "High") Color.Red else Orange, fontWeight = FontWeight.Black, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(alert.description, style = MaterialTheme.typography.bodyLarge)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Reported by: ${alert.postedBy} on ${SimpleDateFormat("dd MMM", Locale.getDefault()).format(Date(alert.timestamp))}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    }
+                }
             }
         }
     }
